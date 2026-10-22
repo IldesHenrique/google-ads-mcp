@@ -49,7 +49,7 @@ if _CLIENT_ID and _CLIENT_SECRET:
         provider_kwargs["jwt_signing_key"] = _JWT_SIGNING_KEY
     if client_storage is not None:
         provider_kwargs["client_storage"] = client_storage
-
+    provider_kwargs["enable_cimd"] = False
     auth = GoogleProvider(**provider_kwargs)
     mcp = FastMCP("Google Ads Server", auth=auth)
 else:
