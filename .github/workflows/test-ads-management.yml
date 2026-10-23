@@ -23,7 +23,8 @@ jobs:
           from ads_mcp.tools.ads_management import ads_management_mcp
           from ads_mcp.coordinator import mcp
           import asyncio
-          tools = asyncio.run(mcp.get_tools())
+          tools = asyncio.run(mcp.list_tools())
+          available = {tool.name for tool in tools}
           required = {
             'ads_management_preview_create_search_campaign',
             'ads_management_preview_update_campaign_budget',
@@ -32,7 +33,7 @@ jobs:
             'ads_management_preview_create_responsive_search_ad',
             'ads_management_apply_approved_change',
           }
-          assert required <= set(tools), (required - set(tools), list(tools))
+          assert required <= available, (required - available, sorted(available))
           print('Successfully imported MCP and mounted all write tools')
           PY
       - name: Run mocked safety tests
