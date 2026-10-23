@@ -15,24 +15,55 @@ def test_validate_only_request_types_with_real_sdk():
     )
     customer_id = "1234567890"
     cases = [
-        ("create_search_campaign", {
-            "campaign_name": "Search campaign paused", "daily_budget_micros": 50000000,
-            "contains_eu_political_ads": False,
-        }, {}),
-        ("update_campaign_budget", {"campaign_id": "123", "new_daily_budget_micros": 75000000}, {
-            "budget": {"resource": f"customers/{customer_id}/campaignBudgets/8765"}
-        }),
-        ("create_ad_group", {
-            "campaign_id": "123", "ad_group_name": "Products", "cpc_bid_micros": 1250000
-        }, {}),
-        ("add_keyword", {
-            "ad_group_id": "654", "keyword_text": "products for pools", "match_type": "EXACT"
-        }, {}),
-        ("create_responsive_search_ad", {
-            "ad_group_id": "654", "headlines": ["Swimming Pool", "Pool Products", "Order Online"],
-            "descriptions": ["Discover pool supplies and accessories.", "See prices and order securely online."],
-            "final_url": "https://example.com/pool",
-        }, {}),
+        (
+            "create_search_campaign",
+            {
+                "campaign_name": "Search campaign paused",
+                "daily_budget_micros": 50000000,
+                "contains_eu_political_ads": False,
+            },
+            {},
+        ),
+        (
+            "update_campaign_budget",
+            {"campaign_id": "123", "new_daily_budget_micros": 75000000},
+            {
+                "budget": {
+                    "resource": f"customers/{customer_id}/campaignBudgets/8765"
+                }
+            },
+        ),
+        (
+            "create_ad_group",
+            {
+                "campaign_id": "123",
+                "ad_group_name": "Products",
+                "cpc_bid_micros": 1250000,
+            },
+            {},
+        ),
+        (
+            "add_keyword",
+            {
+                "ad_group_id": "654",
+                "keyword_text": "products for pools",
+                "match_type": "EXACT",
+            },
+            {},
+        ),
+        (
+            "create_responsive_search_ad",
+            {
+                "ad_group_id": "654",
+                "headlines": ["Swimming Pool", "Pool Products", "Order Online"],
+                "descriptions": [
+                    "Discover pool supplies and accessories.",
+                    "See prices and order securely online.",
+                ],
+                "final_url": "https://example.com/pool",
+            },
+            {},
+        ),
     ]
     for action, params, before in cases:
         service_name, method_name, request = _request(

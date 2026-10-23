@@ -33,8 +33,12 @@ def _campaign_id(value: str | int) -> str:
     return cleaned
 
 
-def _get_campaign(customer_id: str, campaign_id: str, login_customer_id: str | None) -> dict[str, str]:
-    service = utils.get_googleads_service("GoogleAdsService", login_customer_id=login_customer_id)
+def _get_campaign(
+    customer_id: str, campaign_id: str, login_customer_id: str | None
+) -> dict[str, str]:
+    service = utils.get_googleads_service(
+        "GoogleAdsService", login_customer_id=login_customer_id
+    )
     query = (
         "SELECT campaign.id, campaign.name, campaign.status "
         f"FROM campaign WHERE campaign.id = {campaign_id} LIMIT 1"
@@ -57,7 +61,9 @@ def _changes(new_status: str | None, new_name: str | None) -> dict[str, str]:
     if new_status is not None:
         status = new_status.strip().upper()
         if status not in ("PAUSED", "ENABLED"):
-            raise ValueError("new_status deve ser PAUSED ou ENABLED. Exclusão não é permitida.")
+            raise ValueError(
+                "new_status deve ser PAUSED ou ENABLED. Exclusão não é permitida."
+            )
         result["status"] = status
     if new_name is not None:
         name = new_name.strip()
@@ -69,13 +75,17 @@ def _changes(new_status: str | None, new_name: str | None) -> dict[str, str]:
     return result
 
 
-def _operation(customer_id: str, campaign_id: str, changes: dict[str, str]) -> Any:
+def _operation(
+    customer_id: str, campaign_id: str, changes: dict[str, str]
+) -> Any:
     client = utils.get_googleads_client()
     operation = client.get_type("CampaignOperation")
     campaign = operation.update
     campaign.resource_name = f"customers/{customer_id}/campaigns/{campaign_id}"
     if "status" in changes:
-        campaign.status = getattr(client.enums.CampaignStatusEnum, changes["status"])
+        campaign.status = getattr(
+            client.enums.CampaignStatusEnum, changes["status"]
+        )
     if "name" in changes:
         campaign.name = changes["name"]
     operation.update_mask.paths.extend(list(changes))
@@ -96,12 +106,18 @@ def _mutate_campaign(
     request.operations.append(operation)
     request.partial_failure = False
     request.validate_only = validate_only
-    service = utils.get_googleads_service("CampaignService", login_customer_id=login_customer_id)
+    service = utils.get_googleads_service(
+        "CampaignService", login_customer_id=login_customer_id
+    )
     return service.mutate_campaigns(request=request)
 
 
-def _validate(customer_id: str, login_customer_id: str | None, operation: Any) -> None:
-    _mutate_campaign(customer_id, login_customer_id, operation, validate_only=True)
+def _validate(
+    customer_id: str, login_customer_id: str | None, operation: Any
+) -> None:
+    _mutate_campaign(
+        customer_id, login_customer_id, operation, validate_only=True
+    )
 
 
 @campaign_writes_mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
@@ -123,7 +139,11 @@ def preview_campaign_update(
         login_customer_id = _id(login_customer_id, "login_customer_id")
     requested = _changes(new_status, new_name)
     before = _get_campaign(customer_id, campaign_id, login_customer_id)
-    proposed = {field: value for field, value in requested.items() if before.get(field) != value}
+    proposed = {
+        field: value
+        for field, value in requested.items()
+        if before.get(field) != value
+    }
     if not proposed:
         return {"validated": True, "no_change": True, "before": before}
     operation = _operation(customer_id, campaign_id, proposed)
@@ -139,7 +159,9 @@ def preview_campaign_update(
 
 
 @campaign_writes_mcp.tool(
-    annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=False)
+    annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=True, idempotentHint=False
+    )
 )
 def apply_campaign_update(
     customer_id: str,
@@ -157,24 +179,39 @@ def apply_campaign_update(
     a user's approval in the conversation, and the exact confirmation phrase.
     Protected by GOOGLE_ADS_MCP_WRITES_ENABLED=true environment flag.
     """
-    if os.environ.get("GOOGLE_ADS_MCP_WRITES_ENABLED", "false").lower() != "true":
-        raise PermissionError("Escrita desabilitada no servidor (GOOGLE_ADS_MCP_WRITES_ENABLED).")
+    if (
+        os.environ.get("GOOGLE_ADS_MCP_WRITES_ENABLED", "false").lower()
+        != "true"
+    ):
+        raise PermissionError(
+            "Escrita desabilitada no servidor (GOOGLE_ADS_MCP_WRITES_ENABLED)."
+        )
     customer_id = _id(customer_id, "customer_id")
     campaign_id = _campaign_id(campaign_id)
     if login_customer_id is not None:
         login_customer_id = _id(login_customer_id, "login_customer_id")
     if confirmation_text != f"CONFIRMO ALTERAR {customer_id}/{campaign_id}":
-        raise PermissionError("Confirmação explícita da conta e campanha é obrigatória.")
+        raise PermissionError(
+            "Confirmação explícita da conta e campanha é obrigatória."
+        )
     before = _get_campaign(customer_id, campaign_id, login_customer_id)
     if before["name"] != expected_name or before["status"] != expected_status:
-        raise ValueError("A campanha mudou desde a prévia. Consulte novamente antes de aplicar.")
+        raise ValueError(
+            "A campanha mudou desde a prévia. Consulte novamente antes de aplicar."
+        )
     requested = _changes(new_status, new_name)
-    proposed = {field: value for field, value in requested.items() if before.get(field) != value}
+    proposed = {
+        field: value
+        for field, value in requested.items()
+        if before.get(field) != value
+    }
     if not proposed:
         return {"executed": False, "no_change": True, "before": before}
     operation = _operation(customer_id, campaign_id, proposed)
     _validate(customer_id, login_customer_id, operation)
-    result = _mutate_campaign(customer_id, login_customer_id, operation, validate_only=False)
+    result = _mutate_campaign(
+        customer_id, login_customer_id, operation, validate_only=False
+    )
     after = _get_campaign(customer_id, campaign_id, login_customer_id)
     return {
         "executed": True,
@@ -184,5 +221,7 @@ def apply_campaign_update(
         "before": before,
         "after": after,
         "requested": proposed,
-        "verified": all(after.get(key) == value for key, value in proposed.items()),
+        "verified": all(
+            after.get(key) == value for key, value in proposed.items()
+        ),
     }
