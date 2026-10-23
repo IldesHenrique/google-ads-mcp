@@ -7,9 +7,456 @@
         }
       },
       "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "readOnlyHint": false
+      },
+      "description": "EXECUTE one specific, previously validated plan after explicit user approval.\n\nNEVER call unless the user has individually reviewed and approved the displayed\npreview in the conversation and provided confirmation. This makes REAL CHANGES.\nEnvironment GOOGLE_ADS_MCP_WRITES_ENABLED=true is additionally required.\nPreview token is single-use, process-local, and expires after 10 minutes.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmation_text": {
+            "type": "string"
+          },
+          "preview_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "preview_token",
+          "confirmation_text"
+        ],
+        "type": "object"
+      },
+      "name": "ads_management_apply_approved_change",
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Ads Management Apply Approved Change"
+    },
+    {
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      },
+      "annotations": {
         "readOnlyHint": true
       },
-      "description": "Returns ids of customers directly accessible by the user authenticating the call.\n\nUse this tool first to discover available customer IDs if the user hasn't\nprovided one. Most other tools require a valid customer ID as input.\n\nReturns:\n    List[str]: A list of customer IDs.",
+      "description": "Validate adding one PAUSED keyword to an existing Search ad group.\n\nmatch_type: EXACT, PHRASE, or BROAD. Negatives are not yet included.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "ad_group_id": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "keyword_text": {
+            "type": "string"
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "match_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "ad_group_id",
+          "keyword_text",
+          "match_type"
+        ],
+        "type": "object"
+      },
+      "name": "ads_management_preview_add_keyword",
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Ads Management Preview Add Keyword"
+    },
+    {
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "description": "Validate creation of a PAUSED Search-standard ad group with manual CPC bid.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "ad_group_name": {
+            "type": "string"
+          },
+          "campaign_id": {
+            "type": "string"
+          },
+          "cpc_bid_micros": {
+            "type": "integer"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "customer_id",
+          "campaign_id",
+          "ad_group_name",
+          "cpc_bid_micros"
+        ],
+        "type": "object"
+      },
+      "name": "ads_management_preview_create_ad_group",
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Ads Management Preview Create Ad Group"
+    },
+    {
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "description": "Validate creation of a PAUSED responsive Search ad (RSA).\n\n3-15 unique headlines (max 30 chars each), 2-4 unique descriptions (max 90),\nand an HTTPS final URL. No ad is published during preview.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "ad_group_id": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "descriptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "final_url": {
+            "type": "string"
+          },
+          "headlines": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "customer_id",
+          "ad_group_id",
+          "headlines",
+          "descriptions",
+          "final_url"
+        ],
+        "type": "object"
+      },
+      "name": "ads_management_preview_create_responsive_search_ad",
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Ads Management Preview Create Responsive Search Ad"
+    },
+    {
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "description": "Validate creation of a PAUSED Search campaign and nonshared daily budget.\n\nCurrency is the Google Ads account currency. 50 BRL = 50000000 micros.\nNo ads, keywords, or targeting are created with this initial skeleton.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_name": {
+            "type": "string"
+          },
+          "contains_eu_political_ads": {
+            "type": "boolean"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "daily_budget_micros": {
+            "type": "integer"
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "customer_id",
+          "campaign_name",
+          "daily_budget_micros",
+          "contains_eu_political_ads"
+        ],
+        "type": "object"
+      },
+      "name": "ads_management_preview_create_search_campaign",
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Ads Management Preview Create Search Campaign"
+    },
+    {
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "description": "Validate a daily budget adjustment; shared budgets are REJECTED.\n\nAmount is in micros, e.g., R$ 75/day = 75000000 micros (BRL account).",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "new_daily_budget_micros": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "customer_id",
+          "campaign_id",
+          "new_daily_budget_micros"
+        ],
+        "type": "object"
+      },
+      "name": "ads_management_preview_update_campaign_budget",
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Ads Management Preview Update Campaign Budget"
+    },
+    {
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "readOnlyHint": false
+      },
+      "description": "Apply a previously previewed campaign change ONLY after explicit user approval.\n\nThis modifies the real Google Ads account. Never call without a fresh preview,\na user's approval in the conversation, and the exact confirmation phrase.\nProtected by GOOGLE_ADS_MCP_WRITES_ENABLED=true environment flag.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "confirmation_text": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "expected_name": {
+            "type": "string"
+          },
+          "expected_status": {
+            "type": "string"
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "new_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "new_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "customer_id",
+          "campaign_id",
+          "expected_name",
+          "expected_status",
+          "confirmation_text"
+        ],
+        "type": "object"
+      },
+      "name": "campaign_writes_apply_campaign_update",
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Campaign Writes Apply Campaign Update"
+    },
+    {
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "description": "Preview and validate a campaign rename or pause/resume with Google Ads API.\n\nThis tool NEVER changes a live campaign. Always call it before proposing edits.\nProvide customer_id of the client account, not the manager's id.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "login_customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "new_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "new_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "customer_id",
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign_writes_preview_campaign_update",
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Campaign Writes Preview Campaign Update"
+    },
+    {
+      "_meta": {
+        "fastmcp": {
+          "tags": []
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true
+      },
+      "description": "Returns ids of customers directly accessible by the user authenticating the call.\n\nUse this tool first to discover available customer IDs if the user hasn't\nprovided one. Most other tools require a valid customer ID as input.",
       "inputSchema": {
         "additionalProperties": false,
         "properties": {},
