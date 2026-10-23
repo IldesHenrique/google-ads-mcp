@@ -1,0 +1,39 @@
+name: Test Google Ads MCP write suite
+on:
+  push:
+    branches: [feature/ads-management-full-suite]
+  pull_request:
+    paths:
+      - 'ads_mcp/tools/ads_management.py'
+      - 'tests/test_ads_management.py'
+      - '.github/workflows/test-ads-management.yml'
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Google Ads MCP dependencies and test framework
+        run: python -m pip install . pytest
+      - name: Test Google Ads SDK import and FastMCP tool mounting
+        run: |
+          python - <<'PY'
+          from ads_mcp.tools.ads_management import ads_management_mcp
+          from ads_mcp.coordinator import mcp
+          import asyncio
+          tools = asyncio.run(mcp.get_tools())
+          required = {
+            'ads_management_preview_create_search_campaign',
+            'ads_management_preview_update_campaign_budget',
+            'ads_management_preview_create_ad_group',
+            'ads_management_preview_add_keyword',
+            'ads_management_preview_create_responsive_search_ad',
+            'ads_management_apply_approved_change',
+          }
+          assert required <= set(tools), (required - set(tools), list(tools))
+          print('Successfully imported MCP and mounted all write tools')
+          PY
+      - name: Run mocked safety tests
+        run: python -m pytest -q tests/test_ads_management.py
