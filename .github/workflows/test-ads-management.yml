@@ -6,6 +6,7 @@ on:
     paths:
       - 'ads_mcp/tools/ads_management.py'
       - 'tests/test_ads_management.py'
+      - 'tests/test_google_ads_sdk_contract.py'
       - '.github/workflows/test-ads-management.yml'
 jobs:
   tests:
@@ -37,4 +38,4 @@ jobs:
           print('Successfully imported MCP and mounted all write tools')
           PY
       - name: Run mocked safety tests
-        run: python -m pytest -q tests/test_ads_management.py
+        run: python -m pytest -q tests/test_ads_management.py tests/test_google_ads_sdk_contract.py
