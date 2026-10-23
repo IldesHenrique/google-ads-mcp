@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
-from ads_mcp import utils
+from ads_mcp import utils, write_guard
 
 ads_management_mcp = FastMCP("ads_management")
 
@@ -520,6 +520,7 @@ def _preview(
         login_customer_id = _customer_id(login_customer_id, "login_customer_id")
     p = _normalized_params(action, params)
     before = _snapshot(action, customer_id, login_customer_id, p)
+    principal_fingerprint = write_guard.current_principal_fingerprint()
     _mutate(
         action, customer_id, login_customer_id, p, before, validate_only=True
     )
@@ -537,6 +538,7 @@ def _preview(
             _PLANS.pop(next(iter(_PLANS)))
         _PLANS[token] = {
             "created": now,
+            "principal_fingerprint": principal_fingerprint,
             "action": action,
             "customer_id": customer_id,
             "manager_id": login_customer_id,
@@ -696,6 +698,7 @@ def apply_approved_change(
         != "true"
     ):
         raise PermissionError("Alterações reais desabilitadas no servidor.")
+    acting_principal = write_guard.current_principal_fingerprint()
     with _LOCK:
         plan = _PLANS.get(preview_token)
         if not plan:
@@ -705,6 +708,8 @@ def apply_approved_change(
         if time.monotonic() - plan["created"] > _PLAN_TTL_SECONDS:
             _PLANS.pop(preview_token, None)
             raise PermissionError("Prévia expirada. Faça uma nova validação.")
+        if not secrets.compare_digest(plan["principal_fingerprint"], acting_principal):
+            raise PermissionError("Prévia associada a outra sessão OAuth.")
         expected = (
             f"CONFIRMO {plan['action'].upper()} NA CONTA {plan['customer_id']}"
         )
@@ -714,6 +719,7 @@ def apply_approved_change(
             )
         # Consume BEFORE execution to reject replays, including on request failures.
         _PLANS.pop(preview_token, None)
+    write_guard.assert_write_permitted(plan["customer_id"], plan["manager_id"])
     current = _snapshot(
         plan["action"], plan["customer_id"], plan["manager_id"], plan["params"]
     )

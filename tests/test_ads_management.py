@@ -106,12 +106,16 @@ def loaded(monkeypatch):
     pkg = types.ModuleType("ads_mcp")
     pkg.__path__ = []
     pkg.utils = types.ModuleType("ads_mcp.utils")
+    pkg.write_guard = types.ModuleType("ads_mcp.write_guard")
+    pkg.write_guard.current_principal_fingerprint = lambda: "test-principal"
+    pkg.write_guard.assert_write_permitted = lambda *args: None
     for key, val in {
         "fastmcp": fastmcp,
         "mcp": mcp,
         "mcp.types": mcp.types,
         "ads_mcp": pkg,
         "ads_mcp.utils": pkg.utils,
+        "ads_mcp.write_guard": pkg.write_guard,
     }.items():
         monkeypatch.setitem(sys.modules, key, val)
     spec = importlib.util.spec_from_file_location(
@@ -415,3 +419,26 @@ def test_validate_status_method_requires_server_authorization(
         True,
         False,
     ]
+
+
+def test_cross_session_preview_token_denied(loaded, monkeypatch):
+    module, _, services = loaded
+    setup_snapshot(monkeypatch, module)
+    preview = module._preview("create_search_campaign", ID, example_actions()[0][1], None)
+    monkeypatch.setenv("GOOGLE_ADS_MCP_WRITES_ENABLED", "true")
+    monkeypatch.setattr(module.write_guard, "current_principal_fingerprint", lambda: "other-user")
+    with pytest.raises(PermissionError, match="outra sessão OAuth"):
+        module.apply_approved_change(preview["preview_token"], preview["confirmation_text"])
+    assert sum(len(s.requests) for s in services.values()) == 1
+
+def test_account_guard_blocks_before_write(loaded, monkeypatch):
+    module, _, services = loaded
+    setup_snapshot(monkeypatch, module)
+    preview = module._preview("create_search_campaign", ID, example_actions()[0][1], None)
+    monkeypatch.setenv("GOOGLE_ADS_MCP_WRITES_ENABLED", "true")
+    def deny(*args):
+        raise PermissionError("Conta não autorizada")
+    monkeypatch.setattr(module.write_guard, "assert_write_permitted", deny)
+    with pytest.raises(PermissionError, match="não autorizada"):
+        module.apply_approved_change(preview["preview_token"], preview["confirmation_text"])
+    assert sum(len(s.requests) for s in services.values()) == 1

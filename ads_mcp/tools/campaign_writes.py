@@ -14,7 +14,7 @@ from typing import Any
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
-from ads_mcp import utils
+from ads_mcp import utils, write_guard
 
 campaign_writes_mcp = FastMCP("campaign_writes")
 
@@ -194,6 +194,7 @@ def apply_campaign_update(
         raise PermissionError(
             "Confirmação explícita da conta e campanha é obrigatória."
         )
+    write_guard.assert_write_permitted(customer_id, login_customer_id)
     before = _get_campaign(customer_id, campaign_id, login_customer_id)
     if before["name"] != expected_name or before["status"] != expected_status:
         raise ValueError(
