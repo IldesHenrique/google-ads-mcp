@@ -82,14 +82,26 @@ def _operation(customer_id: str, campaign_id: str, changes: dict[str, str]) -> A
     return operation
 
 
-def _validate(customer_id: str, login_customer_id: str | None, operation: Any) -> None:
+def _mutate_campaign(
+    customer_id: str,
+    login_customer_id: str | None,
+    operation: Any,
+    *,
+    validate_only: bool,
+) -> Any:
+    """Send execution flags inside MutateCampaignsRequest (SDK v25+)."""
+    client = utils.get_googleads_client(login_customer_id=login_customer_id)
+    request = client.get_type("MutateCampaignsRequest")
+    request.customer_id = customer_id
+    request.operations.append(operation)
+    request.partial_failure = False
+    request.validate_only = validate_only
     service = utils.get_googleads_service("CampaignService", login_customer_id=login_customer_id)
-    service.mutate_campaigns(
-        customer_id=customer_id,
-        operations=[operation],
-        validate_only=True,
-        partial_failure=False,
-    )
+    return service.mutate_campaigns(request=request)
+
+
+def _validate(customer_id: str, login_customer_id: str | None, operation: Any) -> None:
+    _mutate_campaign(customer_id, login_customer_id, operation, validate_only=True)
 
 
 @campaign_writes_mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
@@ -162,13 +174,7 @@ def apply_campaign_update(
         return {"executed": False, "no_change": True, "before": before}
     operation = _operation(customer_id, campaign_id, proposed)
     _validate(customer_id, login_customer_id, operation)
-    service = utils.get_googleads_service("CampaignService", login_customer_id=login_customer_id)
-    result = service.mutate_campaigns(
-        customer_id=customer_id,
-        operations=[operation],
-        validate_only=False,
-        partial_failure=False,
-    )
+    result = _mutate_campaign(customer_id, login_customer_id, operation, validate_only=False)
     after = _get_campaign(customer_id, campaign_id, login_customer_id)
     return {
         "executed": True,
